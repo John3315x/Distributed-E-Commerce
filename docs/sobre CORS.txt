@@ -1,0 +1,28 @@
+CORS = Cross-Origin Resource Sharing. Es un mecanismo del navegador para decidir si una página web de un origen
+(dominio:puerto:protocolo) puede leer una respuesta de otro origen.
+
+El problema típico es este:
+
+•Tu frontend corre en http://localhost:5173
+•Tu API/Gateway corre en http://localhost:8080
+•El navegador ve “diferente origen” y aplica la política same-origin.
+•Si haces fetch/XHR a ese gateway, el navegador exige que el servidor responda con headers como:
+    ◦Access-Control-Allow-Origin: http://localhost:5173
+    ◦Access-Control-Allow-Headers
+    ◦Access-Control-Allow-Methods
+•Si no los envía, el navegador bloquea la respuesta aunque la petición llegue al servidor.
+Esto pasa porque el navegador no “confía” en que el backend sea seguro; lo hace por seguridad del usuario. El servidor
+debe configurar CORS, o la petición falla antes de llegar al JS.
+
+
+La función del proxy de Vite:
+
+•Vite sirve tu app frontend en localhost:5173
+•Configuras un proxy para que /api o cualquier ruta se redirija internamente a http://localhost:8080
+•Entonces el navegador solo llama a http://localhost:5173/api
+•Esa llamada es “mismo origen” para el navegador, así que no hay CORS
+•Vite reenvía la petición al gateway “por detrás” del servidor
+•Así no necesitas habilitar CORS en el gateway durante desarrollo
+
+Resumen: CORS es una regla del navegador; el proxy de Vite evita esa regla simulando que todo está en el mismo origen.
+En producción normalmente se usa Nginx/Traefik/APIGateway con CORS bien configurado.

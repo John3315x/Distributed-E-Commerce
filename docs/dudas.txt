@@ -1,0 +1,8 @@
+1. Si un usuario se registra, el sistema no le entrega el token jwt al usario porque este no se encargará de pasarlo en
+las peticiones, el backend se encargara.
+
+2. Si el usuario una vez ingresó sus credenciales y el sistema lo valido, ya sea al crear un usuario nuevo o si ya este
+estaba registrado y luego cierra la ventana; Al ingresar de nuevo debería poder hacer uso del sistema mientras el jwt
+siga activo, de lo contrario se lanza un error 401?
+
+3. El Gateway es quien se encargará de validar el token jtw en cada petición verdad?

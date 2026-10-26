@@ -1,0 +1,57 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: Proyecto E-commerce
+
+# CONFIGURACIÓN LOCAL
+#
+  data:
+    redis:
+      host: localhost
+      port: 6380
+
+# CONFIGURACIÓN VIA DOCKER
+#
+#  data:
+#    redis:
+#      host: ${SPRING_REDIS_HOST}
+#      port: ${SPRING_REDIS_PORT}
+
+  cloud:
+    gateway:
+
+      routes:
+        # ==========================
+        # AUTH SERVICE
+        # ==========================
+        - id: auth-service
+          uri: http://127.0.0.1:8081
+          predicates:
+            - Path=/api/auth/**,/api/support/**
+          filters:
+            - StripPrefix=1
+
+        # ==========================
+        # USER SERVICE
+        # ==========================
+        - id: user-service
+          uri: http://127.0.0.1:8082
+          predicates:
+            - Path=/api/users/**
+          filters:
+            - StripPrefix=1
+
+# CONFIGURACIÓN LOCAL
+jwt:
+  secret: eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhZG1pbiIsImlhdCI6MTc3NTIyNjYyMywiZXhwIjoxNzc1MjI4NDIzfQ.PeD5N2MiVf7KQwulyYzkTO0yIh6KHsvqPU9X5-3YpPE
+
+# CONFIGURACIÓN VIA DOCKER
+# jwt:
+#   secret: ${JWT_SECRET}
+
+
+logging:
+  level:
+    org.springframework.cloud.gateway: INFO # Usamos DEBUG en desarrollo, para producción usar INFO

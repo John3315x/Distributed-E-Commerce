@@ -1,0 +1,903 @@
+PROYECTO: E-COMMERCE DISTRIBUIDO BASADO EN MICROSERVICIOS
+===============================================================
+
+1. DESCRIPCIÓN GENERAL
+----------------------
+Construir una plataforma E-Commerce empresarial basada en microservicios,
+utilizando Java y Spring Boot, reutilizando el servicio de autenticación
+desarrollado previamente en Zanshin.
+
+El proyecto debe demostrar:
+- Desarrollo de backend moderno.
+- Arquitectura de microservicios.
+- Comunicación síncrona y asíncrona.
+- Seguridad basada en JWT.
+- Persistencia y caché.
+- Contenerización.
+- Testing automatizado.
+- Integración continua.
+- Despliegue en Linux/AWS.
+- Buenas prácticas de ingeniería de software.
+
+PRINCIPIO:
+No incorporar una tecnología solamente para "tenerla". Cada componente debe
+tener una responsabilidad y una razón técnica clara.
+
+
+2. OBJETIVO PRINCIPAL
+---------------------
+Construir una plataforma funcional donde un usuario pueda:
+
+1. Registrarse e iniciar sesión.
+2. Consultar productos.
+3. Consultar disponibilidad.
+4. Crear una orden.
+5. Reservar inventario.
+6. Procesar un pago simulado.
+7. Confirmar o cancelar la orden según el resultado.
+8. Recibir una notificación mediante eventos.
+
+El sistema debe poder ejecutarse localmente mediante Docker Compose y,
+posteriormente, desplegarse en AWS.
+
+
+3. ARQUITECTURA
+---------------
+Arquitectura lógica:
+
+                        CLIENT / FRONTEND
+                               |
+                               v
+                        API GATEWAY
+                               |
+             +-----------------+-----------------+
+             |                 |                 |
+             v                 v                 v
+        AUTH SERVICE     PRODUCT SERVICE    ORDER SERVICE
+        (ZANSHIN)              |                 |
+                               v                 v
+                         INVENTORY SERVICE   PAYMENT SERVICE
+                                                   |
+                                                   v
+                                          NOTIFICATION SERVICE
+
+Comunicación síncrona:
+- Frontend -> API Gateway
+- Gateway -> microservicios
+- Comunicación REST entre servicios cuando sea necesario.
+
+Comunicación asíncrona:
+- Order Service
+- Inventory Service
+- Payment Service
+- Notification Service
+
+Los eventos deben circular mediante RabbitMQ.
+
+
+4. MICROSERVICIOS
+-----------------
+
+4.1 API GATEWAY
+Responsabilidades:
+- Punto de entrada de la aplicación.
+- Enrutamiento.
+- Integración con autenticación.
+- Filtros de seguridad.
+- Manejo de CORS.
+- Rate limiting cuando corresponda.
+- Correlation ID.
+- Manejo uniforme de errores.
+
+Tecnología:
+- Spring Cloud Gateway.
+
+
+4.2 AUTH SERVICE
+---------------
+Origen:
+- Reutilización del Auth Service de Zanshin.
+
+Responsabilidades:
+- Registro.
+- Inicio de sesión.
+- Gestión de usuarios.
+- Roles.
+- Emisión y validación de JWT.
+- Seguridad mediante Spring Security.
+- Integración con Redis cuando corresponda.
+
+Roles iniciales:
+- USER
+- ADMIN
+
+El servicio debe ser desacoplado del resto de microservicios.
+
+
+4.3 PRODUCT SERVICE
+-------------------
+Responsabilidades:
+- CRUD de productos.
+- Consulta de productos.
+- Consulta por ID.
+- Búsqueda y filtrado básico.
+- Gestión de precios y datos descriptivos.
+
+Debe utilizar PostgreSQL.
+
+
+4.4 INVENTORY SERVICE
+---------------------
+Responsabilidades:
+- Gestión del inventario.
+- Consulta de stock.
+- Reserva de inventario.
+- Liberación de inventario.
+- Confirmación de reserva.
+
+Debe contemplar concurrencia y evitar reservas inválidas.
+
+Investigar e implementar:
+- Optimistic Locking.
+- Manejo de conflictos de concurrencia.
+
+
+4.5 ORDER SERVICE
+-----------------
+Responsabilidades:
+- Creación de órdenes.
+- Consulta de órdenes.
+- Estado de la orden.
+- Integración con Inventory Service.
+- Integración con Payment Service.
+- Publicación y consumo de eventos.
+
+Estados sugeridos:
+
+PENDING
+RESERVED
+PAYMENT_PENDING
+CONFIRMED
+CANCELLED
+
+
+4.6 PAYMENT SERVICE
+-------------------
+Responsabilidades:
+- Simular procesamiento de pagos.
+- Aprobar o rechazar pagos.
+- Publicar eventos de resultado.
+
+No se implementará procesamiento real de tarjetas.
+
+
+4.7 NOTIFICATION SERVICE
+------------------------
+Responsabilidades:
+- Consumir eventos.
+- Generar notificaciones simuladas.
+- Registrar notificaciones enviadas.
+
+Ejemplos:
+- Orden creada.
+- Pago aprobado.
+- Pago rechazado.
+- Orden cancelada.
+
+
+5. TECNOLOGÍAS
+--------------
+Backend:
+- Java 21
+- Spring Boot
+- Spring Security
+- Spring Cloud Gateway
+- OpenFeign
+
+Persistencia:
+- PostgreSQL
+- Redis
+
+Mensajería:
+- RabbitMQ
+
+Contenedores:
+- Docker
+- Docker Compose
+
+Testing:
+- JUnit
+- Mockito
+- Testcontainers
+
+Documentación:
+- Swagger / OpenAPI
+
+CI/CD:
+- GitHub Actions
+
+Infraestructura:
+- Linux / Ubuntu
+- AWS EC2
+- Nginx (opcional)
+- Load Balancer / Auto Scaling en etapa avanzada
+
+
+6. FRONTEND
+-----------
+El frontend será secundario frente al backend.
+
+Objetivo:
+- Proporcionar una interfaz funcional para demostrar el flujo completo.
+- Consumir exclusivamente la API Gateway.
+- No comunicarse directamente con cada microservicio.
+
+Arquitectura:
+
+FRONTEND
+   |
+   v
+API GATEWAY
+   |
+   +--> AUTH
+   +--> PRODUCT
+   +--> ORDER
+   +--> INVENTORY
+
+El frontend puede desarrollarse después de completar las primeras fases
+del backend.
+
+Tecnología sugerida:
+- React
+
+No invertir demasiado tiempo en diseño visual.
+
+
+7. PERSISTENCIA
+---------------
+Cada microservicio debe ser propietario de sus datos.
+
+Evitar una única base de datos compartida entre todos los servicios.
+
+Ejemplo:
+
+Product Service
+    |
+    +--> product_db
+
+Inventory Service
+    |
+    +--> inventory_db
+
+Order Service
+    |
+    +--> order_db
+
+Payment Service
+    |
+    +--> payment_db
+
+Auth Service
+    |
+    +--> auth_db
+
+En desarrollo local se pueden ejecutar múltiples bases PostgreSQL mediante
+Docker Compose.
+
+
+8. COMUNICACIÓN ENTRE SERVICIOS
+-------------------------------
+REST:
+Utilizar para operaciones que requieran respuesta inmediata.
+
+Tecnología:
+- OpenFeign cuando sea apropiado.
+
+Eventos:
+Utilizar RabbitMQ para operaciones asíncronas.
+
+Eventos sugeridos:
+
+OrderCreated
+InventoryReserved
+InventoryReleased
+PaymentRequested
+PaymentCompleted
+PaymentFailed
+OrderConfirmed
+OrderCancelled
+NotificationRequested
+
+Los eventos deben tener contratos claros y versiones cuando sea necesario.
+
+
+9. FLUJO PRINCIPAL DE COMPRA
+----------------------------
+
+1. Usuario inicia sesión.
+2. Auth Service devuelve JWT.
+3. Usuario consulta productos.
+4. Usuario crea una orden.
+5. Order Service registra la orden como PENDING.
+6. Order Service solicita/reserva inventario.
+7. Inventory Service valida disponibilidad.
+8. Si no hay stock:
+   - liberar/cancelar flujo.
+   - Order -> CANCELLED.
+9. Si hay stock:
+   - Inventory -> RESERVED.
+10. Se solicita el pago.
+11. Payment Service simula el resultado.
+12. Si el pago es aprobado:
+   - Order -> CONFIRMED.
+   - Inventory -> confirma reserva.
+   - Notification Service genera notificación.
+13. Si el pago falla:
+   - Inventory -> libera reserva.
+   - Order -> CANCELLED.
+   - Notification Service genera notificación.
+
+
+10. MANEJO DE ERRORES
+---------------------
+Implementar un formato uniforme de errores.
+
+Ejemplo:
+
+{
+  "timestamp": "...",
+  "status": 404,
+  "error": "PRODUCT_NOT_FOUND",
+  "message": "Product not found",
+  "path": "/api/products/123",
+  "correlationId": "..."
+}
+
+Utilizar:
+- @ControllerAdvice
+- Excepciones personalizadas.
+- Códigos HTTP apropiados.
+
+No devolver stack traces al cliente.
+
+
+11. SEGURIDAD
+-------------
+Implementar:
+- JWT.
+- Spring Security.
+- Autorización basada en roles.
+- Password hashing.
+- Validación de entrada.
+- CORS configurado correctamente.
+- Variables sensibles mediante variables de entorno.
+- No almacenar secretos en Git.
+- No utilizar credenciales hardcodeadas.
+
+El Gateway debe ser el punto de entrada público.
+
+
+12. CONFIGURACIÓN
+-----------------
+Toda configuración sensible debe utilizar variables de entorno.
+
+Ejemplos:
+
+DATABASE_URL
+DATABASE_USERNAME
+DATABASE_PASSWORD
+JWT_SECRET
+REDIS_HOST
+REDIS_PORT
+RABBITMQ_HOST
+RABBITMQ_USERNAME
+RABBITMQ_PASSWORD
+
+No subir:
+- passwords
+- JWT secrets
+- claves AWS
+- archivos .env
+- archivos .pem
+- credenciales
+
+
+13. LOGGING
+-----------
+Implementar logs útiles y estructurados.
+
+Registrar:
+- Inicio de solicitudes.
+- Resultado de operaciones importantes.
+- Errores.
+- Eventos publicados.
+- Eventos consumidos.
+- Correlation ID.
+
+No registrar:
+- Contraseñas.
+- JWT completos.
+- Información sensible innecesaria.
+
+
+14. DOCUMENTACIÓN
+-----------------
+Cada servicio debe exponer documentación OpenAPI.
+
+La documentación debe permitir:
+- Consultar endpoints.
+- Ver parámetros.
+- Ver cuerpos de solicitud.
+- Ver respuestas.
+- Probar endpoints.
+
+El Gateway debe proporcionar una experiencia centralizada de documentación
+cuando sea viable.
+
+
+15. TESTING
+-----------
+Implementar diferentes niveles:
+
+Unit Tests:
+- Servicios.
+- Reglas de negocio.
+- Validaciones.
+
+Mockito:
+- Dependencias externas.
+- Repositorios.
+- Clientes HTTP.
+
+Integration Tests:
+- Base de datos.
+- Integración entre componentes.
+
+Testcontainers:
+- PostgreSQL.
+- RabbitMQ.
+- Redis cuando sea necesario.
+
+Objetivo:
+No buscar solamente cobertura alta; priorizar pruebas de comportamiento
+y reglas de negocio importantes.
+
+
+16. DOCKER
+----------
+Cada microservicio debe tener su Dockerfile.
+
+Docker Compose debe permitir iniciar el entorno completo local.
+
+Servicios mínimos:
+
+- Gateway
+- Auth
+- Product
+- Inventory
+- Order
+- Payment
+- Notification
+- PostgreSQL(s)
+- Redis
+- RabbitMQ
+
+La configuración debe estar separada por entorno cuando sea necesario.
+
+
+17. GIT
+-------
+Utilizar Git correctamente.
+
+Ramas sugeridas:
+
+main
+develop
+feature/*
+fix/*
+
+Commits claros y descriptivos.
+
+Ejemplos:
+
+feat: add product creation endpoint
+feat: implement inventory reservation
+fix: release inventory after payment failure
+test: add order service integration tests
+
+
+18. CI/CD
+--------
+GitHub Actions debe automatizar progresivamente:
+
+1. Checkout.
+2. Configuración de Java.
+3. Build.
+4. Unit tests.
+5. Integration tests.
+6. Construcción de imágenes Docker.
+7. Publicación de imágenes.
+8. Despliegue.
+
+No automatizar todo desde el primer día.
+Implementar CI antes de implementar CD.
+
+
+19. AWS
+-------
+Primera etapa:
+- Una EC2.
+- Ubuntu.
+- Docker.
+- Docker Compose.
+- Security Groups.
+- Variables de entorno.
+- Despliegue manual.
+
+Segunda etapa:
+- Separación de servicios.
+- RDS para PostgreSQL.
+- Redis administrado si corresponde.
+- Load Balancer.
+
+Tercera etapa:
+- Launch Template.
+- Auto Scaling Group.
+- Múltiples EC2.
+- CloudWatch.
+
+Objetivo final:
+
+                    Internet
+                       |
+                       v
+                Load Balancer
+                       |
+             +---------+---------+
+             |                   |
+             v                   v
+           EC2 #1              EC2 #2
+             |                   |
+             +---------+---------+
+                       |
+                  Microservicios
+                       |
+              +--------+--------+
+              |                 |
+              v                 v
+             RDS            RabbitMQ
+
+
+20. LINUX
+---------
+Utilizar Linux como parte real del proceso de despliegue y administración.
+
+Practicar:
+
+- SSH
+- usuarios y grupos
+- permisos
+- chmod
+- chown
+- systemctl
+- journalctl
+- procesos
+- top
+- free
+- df
+- du
+- grep
+- find
+- curl
+- wget
+- netstat/ss
+- logs
+- variables de entorno
+- administración de Docker
+
+No limitar el aprendizaje de Linux a teoría.
+
+
+21. OBSERVABILIDAD
+------------------
+Etapa avanzada.
+
+Opcionales:
+- Prometheus.
+- Grafana.
+- Métricas de aplicación.
+- Health checks.
+- Spring Boot Actuator.
+- Centralización de logs.
+
+Implementar solamente después de estabilizar la aplicación.
+
+
+22. RATE LIMITING
+-----------------
+Implementar como mejora avanzada.
+
+Puede utilizarse:
+- Spring Cloud Gateway.
+- Redis.
+
+Definir límites razonables para:
+- Login.
+- Registro.
+- Endpoints públicos.
+- Endpoints sensibles.
+
+
+23. AUDITORÍA
+------------
+Como mejora avanzada, registrar acciones relevantes:
+
+- Login.
+- Creación de productos.
+- Modificación de inventario.
+- Creación de órdenes.
+- Cambios de estado.
+- Resultado de pagos.
+
+La auditoría debe estar separada de los logs técnicos.
+
+
+24. VERSIONADO DE API
+---------------------
+Utilizar versionado cuando sea necesario.
+
+Ejemplo:
+
+/api/v1/products
+/api/v1/orders
+
+No introducir versionado innecesario antes de tener una API estable.
+
+
+25. ESTRUCTURA DEL REPOSITORIO
+------------------------------
+Opción recomendada:
+
+ecommerce-platform/
+|
++-- gateway/
++-- auth-service/
++-- product-service/
++-- inventory-service/
++-- order-service/
++-- payment-service/
++-- notification-service/
++-- frontend/
++-- infrastructure/
+|   +-- docker/
+|   +-- aws/
+|   +-- nginx/
+|
++-- docs/
+|
++-- docker-compose.yml
++-- README.md
+
+
+26. FASES DE DESARROLLO
+-----------------------
+
+FASE 0 - PLANIFICACIÓN
+- Definir arquitectura.
+- Definir responsabilidades.
+- Definir entidades.
+- Definir endpoints.
+- Definir eventos.
+- Crear repositorio.
+- Crear documentación inicial.
+
+
+FASE 1 - FUNDACIÓN
+- Integrar Auth Service de Zanshin.
+- Crear API Gateway.
+- Crear Product Service.
+- PostgreSQL.
+- Docker.
+- Swagger.
+- Manejo de errores.
+- Variables de entorno.
+
+Resultado:
+Usuario puede autenticarse y gestionar productos.
+
+
+FASE 2 - NEGOCIO
+- Inventory Service.
+- Order Service.
+- Reserva de inventario.
+- Estados de órdenes.
+- Optimistic Locking.
+- OpenFeign.
+- Pruebas unitarias.
+
+Resultado:
+Usuario puede crear una orden y reservar stock.
+
+
+FASE 3 - EVENTOS
+- RabbitMQ.
+- Payment Service.
+- Notification Service.
+- Eventos.
+- Flujos de éxito.
+- Flujos de error.
+- Compensación de operaciones.
+
+Resultado:
+Sistema distribuido funcional.
+
+
+FASE 4 - RENDIMIENTO
+- Redis.
+- Caché de productos.
+- Rate limiting.
+- Optimización.
+- Métricas básicas.
+
+Resultado:
+Sistema optimizado.
+
+
+FASE 5 - CALIDAD
+- JUnit.
+- Mockito.
+- Testcontainers.
+- Integration tests.
+- Validaciones.
+- Refactorización.
+- Documentación.
+
+Resultado:
+Código mantenible y probado.
+
+
+FASE 6 - CI/CD
+- GitHub Actions.
+- Build automático.
+- Tests automáticos.
+- Docker images.
+- Registry.
+- Pipeline de despliegue.
+
+Resultado:
+Proceso de entrega automatizado.
+
+
+FASE 7 - AWS
+- EC2.
+- Ubuntu.
+- Docker.
+- Security Groups.
+- Despliegue.
+- RDS.
+- Load Balancer.
+
+Resultado:
+Aplicación desplegada en AWS.
+
+
+FASE 8 - ESCALABILIDAD
+- Launch Template.
+- Auto Scaling Group.
+- Múltiples EC2.
+- CloudWatch.
+- Health checks.
+
+Resultado:
+Infraestructura capaz de escalar según demanda.
+
+
+FASE 9 - OBSERVABILIDAD
+- Actuator.
+- Prometheus.
+- Grafana.
+- Logs estructurados.
+- Métricas.
+- Alertas básicas.
+
+
+27. CRITERIOS DE FINALIZACIÓN
+-----------------------------
+El proyecto se considera terminado cuando:
+
+[ ] El usuario puede registrarse.
+[ ] El usuario puede iniciar sesión.
+[ ] JWT funciona correctamente.
+[ ] Gateway enruta correctamente.
+[ ] Productos pueden gestionarse.
+[ ] Inventario funciona.
+[ ] Órdenes funcionan.
+[ ] Inventario puede reservarse.
+[ ] Pagos pueden aprobarse/rechazarse.
+[ ] Inventario se libera ante fallos.
+[ ] Notificaciones funcionan mediante eventos.
+[ ] RabbitMQ funciona.
+[ ] Redis funciona.
+[ ] Tests principales están implementados.
+[ ] Testcontainers funciona.
+[ ] Docker Compose levanta el sistema.
+[ ] Swagger está documentado.
+[ ] README está completo.
+[ ] CI ejecuta automáticamente.
+[ ] Aplicación está desplegada en AWS.
+[ ] Logs y health checks funcionan.
+[ ] Arquitectura está documentada.
+
+
+28. PRINCIPIOS DEL PROYECTO
+---------------------------
+1. No agregar tecnologías sin necesidad.
+2. Priorizar comprensión sobre cantidad de herramientas.
+3. Mantener cada microservicio con una responsabilidad clara.
+4. Evitar compartir bases de datos entre servicios.
+5. Preferir código simple antes que sobreingeniería.
+6. Automatizar progresivamente.
+7. Documentar decisiones técnicas.
+8. Probar reglas de negocio importantes.
+9. Tratar la infraestructura como parte del proyecto.
+10. Mantener secretos fuera del repositorio.
+11. Cada fase debe producir un sistema ejecutable.
+12. No avanzar a una fase si la anterior es inestable.
+
+
+29. RESULTADO PROFESIONAL ESPERADO
+---------------------------------
+El proyecto final debe demostrar experiencia práctica en:
+
+Backend:
+- Java 21.
+- Spring Boot.
+- Spring Security.
+- REST APIs.
+- Microservicios.
+
+Arquitectura:
+- API Gateway.
+- Comunicación síncrona.
+- Eventos.
+- RabbitMQ.
+- Separación de responsabilidades.
+
+Datos:
+- PostgreSQL.
+- Redis.
+- Concurrencia.
+- Optimistic Locking.
+
+DevOps:
+- Git.
+- Docker.
+- Docker Compose.
+- GitHub Actions.
+- CI/CD.
+
+Cloud:
+- Linux.
+- AWS EC2.
+- RDS.
+- Load Balancer.
+- Auto Scaling.
+- CloudWatch.
+
+Calidad:
+- JUnit.
+- Mockito.
+- Testcontainers.
+- OpenAPI.
+- Logging.
+- Manejo de errores.
+
+El objetivo no es solamente que la aplicación funcione.
+
+El objetivo es poder explicar:
+- por qué existe cada componente,
+- cómo se comunican,
+- qué ocurre cuando algo falla,
+- cómo se despliega,
+- cómo se monitorea,
+- y cómo se escala.

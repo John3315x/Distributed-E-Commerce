@@ -1,0 +1,63 @@
+services:
+
+#=======================================================================================================================
+  postgres:
+    image: postgres:18
+    container_name: ecommerce-postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql
+    networks:
+      - e-commerce-net
+
+
+#=======================================================================================================================
+  redis:
+    image: redis
+    container_name: ecommerce-redis
+    ports:
+      - "6380:6379"
+    networks:
+      - e-commerce-net
+
+
+#=======================================================================================================================
+  gateway:
+    build: ./gateway # Construye la imagen del gateway a partir del Dockerfile ubicado en ./gateway
+    ports:
+      - "8080:8080" # Mapea el puerto 8080 del contenedor al puerto 8080 de tu máquina local
+    depends_on:
+      - redis
+    environment:
+      SPRING_REDIS_HOST: ${SPRING_REDIS_HOST}
+      SPRING_REDIS_PORT: ${SPRING_REDIS_PORT}
+      JAVA_TOOL_OPTIONS: "-Xms64m -Xmx192m" # Esto establece las opciones de la máquina virtual de Java, limitando la memoria inicial a 64 MB y la memoria máxima a 192 MB.
+      JWT_SECRET: ${JWT_SECRET}
+    networks:
+      - e-commerce-net # Conecta el contenedor del gateway a la red personalizada e-commerce-net, lo que permite la comunicación entre los contenedores que están en esta red
+
+
+  user-service:
+    build: ./user-service
+    ports:
+      - "8082:8082" # Mapea el puerto 8082 del contenedor al puerto 8082 de tu máquina local
+    depends_on:
+      - redis
+      - postgres
+    environment:
+      - DB_USERNAME=${DB_USERNAME}
+      - DB_PASSWORD=${DB_PASSWORD} # Establece la variable de entorno DB_PASSWORD para el user-service, que se utilizará para conectarse a la base de datos PostgreSQL
+      - JAVA_TOOL_OPTIONS=-Xms64m -Xmx192m
+    networks:
+      - e-commerce-net # Conecta el contenedor del user-service a la red personalizada e-commerce-net, lo que permite la comunicación entre los contenedores que están en esta red
+
+
+volumes:
+  postgres_data:
+
+networks:
+  e-commerce-net:

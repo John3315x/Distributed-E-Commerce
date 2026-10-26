@@ -1,0 +1,396 @@
+COMANDOS ÚTILES DURANTE EL DESARROLLO BACKEND
+===============================================
+
+1. JAVA
+-------
+
+Ver versión de Java:
+java -version
+
+Ver versión del compilador:
+javac -version
+
+Ver variables/configuración de Java:
+java -XshowSettings:properties -version
+
+Ver qué Java usa Windows:
+where java
+where javac
+
+
+2. MAVEN
+--------
+
+Ver versión de Maven:
+mvn -version
+
+Compilar:
+mvn compile
+
+Compilar y ejecutar tests:
+mvn test
+
+Empaquetar:
+mvn package
+
+Empaquetar sin ejecutar tests:
+mvn package -DskipTests
+
+Limpiar y compilar:
+mvn clean compile
+
+Limpiar, testear y empaquetar:
+mvn clean package
+
+Ejecutar una aplicación Spring Boot:
+mvn spring-boot:run
+
+Forzar actualización de dependencias:
+mvn clean install -U
+
+Ver árbol de dependencias:
+mvn dependency:tree
+
+
+3. GIT
+------
+
+Ver estado:
+git status
+
+Ver ramas:
+git branch
+
+Crear una rama:
+git checkout -b nombre-rama
+
+Cambiar de rama:
+git checkout nombre-rama
+
+Agregar cambios:
+git add .
+
+Crear commit:
+git commit -m "mensaje"
+
+Subir cambios:
+git push
+
+Traer cambios:
+git pull
+
+Ver historial:
+git log --oneline
+
+Ver diferencias:
+git diff
+
+
+4. PUERTOS EN WINDOWS
+---------------------
+
+Ver qué proceso usa un puerto:
+netstat -ano | findstr :8082
+
+Ejemplo para el puerto 8080:
+netstat -ano | findstr :8080
+
+Ver qué proceso corresponde a un PID:
+tasklist | findstr 12345
+
+PowerShell:
+Get-NetTCPConnection -LocalPort 8082
+
+PowerShell con PID:
+Get-NetTCPConnection -LocalPort 8082 | Select-Object LocalPort, State, OwningProcess
+
+Ver proceso por PID en PowerShell:
+Get-Process -Id 12345
+
+Finalizar proceso por PID:
+taskkill /PID 12345 /F
+
+
+5. SPRING BOOT
+--------------
+
+Ejecutar:
+mvn spring-boot:run
+
+Ejecutar con un perfil:
+mvn spring-boot:run -Dspring-boot.run.profiles=dev
+
+Ejecutar JAR:
+java -jar target/nombre-aplicacion.jar
+
+Ejecutar JAR con un perfil:
+java -jar target/nombre-aplicacion.jar --spring.profiles.active=dev
+
+Cambiar puerto al ejecutar:
+java -jar target/nombre-aplicacion.jar --server.port=8082
+
+
+6. DOCKER
+---------
+
+Ver contenedores activos:
+docker ps
+
+Ver todos los contenedores:
+docker ps -a
+
+Ver imágenes:
+docker images
+
+Iniciar un contenedor:
+docker start nombre-contenedor
+
+Detener un contenedor:
+docker stop nombre-contenedor
+
+Reiniciar:
+docker restart nombre-contenedor
+
+Ver logs:
+docker logs nombre-contenedor
+
+Ver logs en tiempo real:
+docker logs -f nombre-contenedor
+
+Entrar a un contenedor:
+docker exec -it nombre-contenedor bash
+
+Si bash no existe:
+docker exec -it nombre-contenedor sh
+
+Ver consumo de recursos:
+docker stats
+
+
+7. DOCKER COMPOSE
+-----------------
+
+Levantar servicios:
+docker compose up
+
+Levantar en segundo plano:
+docker compose up -d
+
+Reconstruir imágenes:
+docker compose build
+
+Reconstruir y levantar:
+docker compose up --build
+
+Levantar un servicio específico:
+docker compose up -d postgres
+
+Ver servicios:
+docker compose ps
+
+Ver logs:
+docker compose logs
+
+Ver logs de un servicio:
+docker compose logs postgres
+
+Seguir logs:
+docker compose logs -f postgres
+
+Detener servicios:
+docker compose down
+
+Detener y eliminar volúmenes:
+docker compose down -v
+
+Reiniciar un servicio:
+docker compose restart postgres
+
+
+8. POSTGRESQL / BASE DE DATOS
+-----------------------------
+
+Entrar a PostgreSQL desde un contenedor:
+docker exec -it nombre-contenedor psql -U usuario -d basedatos
+
+Ejemplo:
+docker exec -it ecommerce-postgres psql -U user-e-commerce -d ecommerce
+
+Listar bases de datos dentro de psql:
+\l
+
+Conectarse a una base:
+\c nombre_basedatos
+
+Listar tablas:
+\dt
+
+Describir una tabla:
+\d nombre_tabla
+
+Salir de psql:
+\q
+
+
+9. RED / HTTP
+-------------
+
+Probar un endpoint GET:
+curl http://localhost:8082/users
+
+Probar un endpoint:
+curl http://localhost:8080/actuator/health
+
+POST con JSON:
+curl -X POST http://localhost:8082/users ^
+  -H "Content-Type: application/json" ^
+  -d "{"name":"John"}"
+
+En PowerShell puede ser más cómodo:
+curl.exe http://localhost:8082/users
+
+
+10. PROCESOS JAVA
+-----------------
+
+Ver procesos Java:
+jps
+
+Ver procesos Java con detalles:
+jps -l
+
+Ver todos los procesos Java en Windows:
+tasklist | findstr java
+
+
+11. LINUX / EC2
+--------------
+
+Conectarse por SSH:
+ssh -i archivo.pem usuario@IP
+
+Ver archivos:
+ls
+
+Ver archivos ocultos:
+ls -la
+
+Cambiar directorio:
+cd nombre-directorio
+
+Subir un nivel:
+cd ..
+
+Ver directorio actual:
+pwd
+
+Copiar archivo:
+cp archivo destino
+
+Mover/renombrar:
+mv archivo destino
+
+Eliminar archivo:
+rm archivo
+
+Ver procesos:
+ps aux
+
+Ver puertos:
+sudo ss -tulpn
+
+Ver logs:
+journalctl -u nombre-servicio
+
+Seguir logs:
+journalctl -u nombre-servicio -f
+
+
+12. COMANDOS ÚTILES PARA TU PROYECTO
+------------------------------------
+
+Comprobar Gateway (8080):
+netstat -ano | findstr :8080
+
+Comprobar Auth Service (8081):
+netstat -ano | findstr :8081
+
+Comprobar User Service (8082):
+netstat -ano | findstr :8082
+
+Comprobar PostgreSQL:
+docker ps
+
+Ver logs del User Service si lo ejecutas localmente:
+mvn spring-boot:run
+
+Ver logs de PostgreSQL:
+docker logs -f ecommerce-postgres
+
+Levantar toda la infraestructura:
+docker compose up -d
+
+Ver estado:
+docker compose ps
+
+Ver todos los logs:
+docker compose logs -f
+
+
+13. LIMPIEZA / PROBLEMAS COMUNES
+--------------------------------
+
+Limpiar proyecto Maven:
+mvn clean
+
+Limpiar y reconstruir:
+mvn clean package
+
+Forzar descarga de dependencias:
+mvn clean package -U
+
+Recrear contenedores:
+docker compose down
+docker compose up --build -d
+
+Recrear contenedores y borrar volúmenes:
+docker compose down -v
+docker compose up --build -d
+
+NOTA:
+docker compose down -v elimina los volúmenes asociados al Compose.
+Esto puede eliminar datos persistentes de PostgreSQL.
+
+
+14. COMANDOS RÁPIDOS DE DIAGNÓSTICO
+-----------------------------------
+
+¿Está corriendo el servicio?
+netstat -ano | findstr :8082
+
+¿Quién ocupa el puerto?
+tasklist | findstr <PID>
+
+¿Está corriendo el contenedor?
+docker ps
+
+¿Qué dice el contenedor?
+docker logs nombre-contenedor
+
+¿Está PostgreSQL activo?
+docker ps | findstr postgres
+
+¿Maven funciona?
+mvn -version
+
+¿Qué Java está usando Maven?
+mvn -version
+
+¿Hay procesos Java?
+jps -l
+
+¿Hay errores de compilación?
+mvn clean compile
+
+¿Fallan los tests?
+mvn test
